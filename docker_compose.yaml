@@ -1,0 +1,12 @@
+services:
+  news_llm:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://trading:postgres@postgre:5432/trading
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  
