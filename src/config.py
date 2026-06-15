@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dot_env()
+load_dotenv()
 
 USER_AGENT = os.environ['USER_AGENT']
 LLAMA_API_KEY = os.environ['LLAMA_API_KEY']
