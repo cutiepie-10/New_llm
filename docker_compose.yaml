@@ -3,7 +3,7 @@ services:
     build: .
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://trading:postgres@postgre:5432/trading
+      DATABASE_URL: postgresql://trading:postgres@postgres:5432/trading
     depends_on:
       postgres:
         condition: service_healthy
