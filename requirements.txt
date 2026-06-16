@@ -9,3 +9,4 @@ llama-index-tools-duckduckgo
 llama-index-tools-wikipedia
 llama-parse
 firecrawl-py
+llmlingua
