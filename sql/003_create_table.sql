@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS news_insights (
     catalyst_type TEXT, --earning | regulatory | corporate | macro | other
     catalyst_summary TEXT, -- 1- sentence, what happened and why it matters
     is_market_moving BOOLEAN,
-    raw_response JSONB --full llm output for debugging 
+    raw_response TEXT --full llm output for debugging 
 );
