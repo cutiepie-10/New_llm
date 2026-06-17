@@ -13,6 +13,9 @@ def get_connection():
 
 
 def fetch_unprocessed_news() -> list[dict]:
+    """
+    Fetches the unprocessed news rows from the raw_news table.
+    """
     sql = """
     SELECT id, url,source_id, headline, summary, ingested_at,
     ticker_tags, category, is_processed 
@@ -20,7 +23,7 @@ def fetch_unprocessed_news() -> list[dict]:
     WHERE is_processed= FALSE
     ORDER BY ingested_at ASC,
     published_at ASC
-    LIMIT 1;
+    LIMIT 3;
     """
     with get_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as curr:
@@ -32,6 +35,9 @@ def fetch_unprocessed_news() -> list[dict]:
 
 
 def fetch_unprocessed_nse() -> list[dict]:
+    """
+    Fetched the unprocessed nse filings from nse_filings table
+    """
     sql = """
     SELECT filing_id, pdf_url,symbol,subject, description, exchange, ingested_at,
     filing_type, is_processed, filing_date
@@ -39,7 +45,7 @@ def fetch_unprocessed_nse() -> list[dict]:
     WHERE is_processed= FALSE
     ORDER BY ingested_at ASC,
     filing_date ASC
-    LIMIT 1;
+    LIMIT 2;
     """
     with get_connection() as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as curr:
@@ -51,15 +57,20 @@ def fetch_unprocessed_nse() -> list[dict]:
 
 
 def upsert_news_insight(insight: dict, insight_type: str) -> int:
+    """
+    Updates the raw news / nse filing with the 
+    """
     with get_connection() as conn:
         with conn.cursor() as curr:
             if insight_type == 'rss':
                 curr.execute("""
                 UPDATE  raw_news
-                SET is_processed =%s
+                SET is_processed =%s,
+                    body = %s,
+                    ticker_tags= %s
                 WHERE id= %s;
-                """, (True, insight["raw_news_id"]))
-                logger.info("Updated %d rows in nse_filing", curr.rowcount)
+                """, (True, insight["raw_news_id"], insight['body'], insight['ticker_tags']))
+                logger.info("Updated %d rows in raw_news", curr.rowcount)
                 curr.execute(
                     """
                     INSERT INTO news_insights(
