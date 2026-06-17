@@ -58,19 +58,11 @@ def fetch_unprocessed_nse() -> list[dict]:
 
 def upsert_news_insight(insight: dict, insight_type: str) -> int:
     """
-    Updates the raw news / nse filing with the 
+     Inserts data into news_insight 
     """
     with get_connection() as conn:
         with conn.cursor() as curr:
             if insight_type == 'rss':
-                curr.execute("""
-                UPDATE  raw_news
-                SET is_processed =%s,
-                    body = %s,
-                    ticker_tags= %s
-                WHERE id= %s;
-                """, (True, insight["raw_news_id"], insight['body'], insight['ticker_tags']))
-                logger.info("Updated %d rows in raw_news", curr.rowcount)
                 curr.execute(
                     """
                     INSERT INTO news_insights(
@@ -89,12 +81,6 @@ def upsert_news_insight(insight: dict, insight_type: str) -> int:
                         insight.get("raw_response")
                     ))
             if insight_type == "nse":
-                curr.execute("""
-                UPDATE  nse_filings
-                SET is_processed =%s
-                WHERE filing_id= %s;
-                """, (True, insight["nse_filing_id"]))
-                logger.info("Updated %d rows in nse_filing", curr.rowcount)
                 curr.execute(
                     """
                     INSERT INTO news_insights (
@@ -112,4 +98,34 @@ def upsert_news_insight(insight: dict, insight_type: str) -> int:
                         insight.get("is_market_moving"),
                         insight.get("raw_response")
                     ))
+            return curr.rowcount
+
+
+def upsert_raw_news(insight: dict) -> int:
+    """
+    Updates the raw news table.
+    """
+    with get_connection() as conn:
+        with conn.cursor() as curr:
+            curr.execute("""
+                    UPDATE  raw_news
+                    SET is_processed =%s ,
+                        body = %s,
+                        ticker_tags= %s
+                    WHERE id= %s ;
+                    """, (True, insight['body'], insight['ticker_tags'], insight["raw_news_id"],))
+            return curr.rowcount
+
+
+def upsert_nse_filings(insight: dict) -> int:
+    """
+    Updates the nse filing table.
+    """
+    with get_connection() as conn:
+        with conn.cursor() as curr:
+            curr.execute("""
+                UPDATE  nse_filings
+                SET is_processed =%s
+                WHERE filing_id= %s;
+                """, (True, insight["nse_filing_id"]))
             return curr.rowcount
