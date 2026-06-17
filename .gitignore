@@ -1,2 +1,3 @@
 .env
-src/tag_maps/ticker_map.yaml
+venv
+/tests/__pycache__
