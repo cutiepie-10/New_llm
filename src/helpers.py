@@ -48,7 +48,7 @@ def parse_insight(insight: str) -> dict:
         raise ValueError('No json found in the returned response')
     raw_json_str = json_match.group(0)
     parsed_dict = json.loads(raw_json_str.strip())
-    logger.info("Parsed json to python %s", parsed_dict)
+    logger.info("Parsed json to python dictionary object: \n%s", parsed_dict)
     return parsed_dict
 
 
@@ -57,18 +57,18 @@ def compress_article(article: str) -> str:
     Compresses the pdf or the webpage content
     """
     if len(article) > 500:
-        chunks = [' '.join(article[i:i+300])
-                  for i in range(0, len(article), 300)]
+        chunks = [' '.join(article[i:i+400])
+                  for i in range(0, len(article), 400)]
         compressed_chunks = []
         for chunk in chunks:
             if not chunk.strip():
                 continue
             compressed = COMPRESSOR.compress_prompt_llmlingua2(
                 chunk,
-                rate=0.2,
-                target_token=130,
+                rate=0.4,
+                target_token=120,
             )
             compressed_chunks.append(compressed['compressed_prompt'].strip())
         article = "".join(compressed_chunks)
-        logger.info("Compressed article to %d", len(article))
+        logger.info("Compressed article to %d tokens", len(article))
     return article
