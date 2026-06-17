@@ -35,7 +35,6 @@ def get_insights():
 
 def start():
     scheduler = BlockingScheduler(timezone='Asia/Kolkata')
-    get_insights()
     scheduler.add_job(
         get_insights,
         trigger=IntervalTrigger(minutes=INSIGHT_REFRESH_TIME),
