@@ -13,18 +13,20 @@ from workflows.retry_policy import (
 )
 
 
-
-from src.config import MODEL, MAX_TOKENS, GROQ_API_KEY, COMPRESSOR
+from src.config import MODEL, MAX_TOKENS, GROQ_API_KEY
 
 
 logger = logging.getLogger(__name__)
 
 
 async def start_agent(feed: dict) -> str:
+    """
+    Starts the agent. Returns the response given by the agent.
+    """
     llm = Groq(
         model=MODEL,
         max_tokens=MAX_TOKENS,
-        temperature=0.1,
+        temperature=0.3,
         api_key=GROQ_API_KEY
     )
     policy = retry_policy(
@@ -61,26 +63,19 @@ async def start_agent(feed: dict) -> str:
     ---------
     Now based on the input above tell the sentiment, urgency score, is market moving, ticker_tags, catalyst type and catalyst summary.
     """
+
     
-    if len(feed["parsed_text"]) > 500:
-        compressed_prompt = COMPRESSOR.compress_prompt_llmlingua2(
-            feed["parsed_text"],
-            rate=0.4,
-        )
-        feed["parsed_text"] = compressed_prompt['compressed_prompt']
-        logger.info("Compressed prompt to %d from %d", len(
-            compressed_prompt['compressed_prompt']), len(prompt))
     template = RichPromptTemplate(template_str)
     prompt = template.format(
-        headline=feed['headline'] or feed["subject"],
-        summary=feed["summary"], parsed_text=feed["parsed_text"], ticker_tags=feed.get(
+        headline=feed.get('headline') or feed.get("subject"),
+        summary=feed.get("summary"), parsed_text=feed.get("parsed_text"), ticker_tags=feed.get(
             "ticker_tags")
         or feed.get("symbol"), category=feed.get("category") or feed.get("filing_type")
     )
     response = await agent.run(
-        compressed_prompt['compressed_prompt'], max_iterations=5, early_stopping_method="generate"
+        prompt, max_iterations=5, early_stopping_method="generate"
     )
     res = response.response
     logger.info("Final answer is produced of %d tokens ",
-                len(res))
-    return res
+                len(res.blocks[0].text))
+    return res.blocks[0].text
