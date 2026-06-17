@@ -56,7 +56,7 @@ def compress_article(article: str) -> str:
     """
     Compresses the pdf or the webpage content
     """
-    if len(article) > 500:
+    while len(article) > 600:
         chunks = [' '.join(article[i:i+400])
                   for i in range(0, len(article), 400)]
         compressed_chunks = []
