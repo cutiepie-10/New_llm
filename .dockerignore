@@ -2,3 +2,4 @@
 ./tests
 .dockerignore
 ./.pytest_cache
+./src/__pycache__
