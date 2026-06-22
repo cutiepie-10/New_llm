@@ -17,10 +17,10 @@ def fetch_unprocessed_news() -> list[dict]:
     Fetches the unprocessed news rows from the raw_news table.
     """
     sql = """
-    SELECT id, url,source_id, headline, summary, ingested_at,
-    ticker_tags, category, is_processed 
+    SELECT id, url, headline, summary, ingested_at,
+    ticker_tags, category, is_processed
     FROM raw_news
-    WHERE is_processed= FALSE
+    WHERE is_processed= FALSE AND NOT (category='{"other"}' AND ticker_tags= '{}')
     ORDER BY ingested_at ASC,
     published_at ASC
     LIMIT 3;
@@ -39,7 +39,7 @@ def fetch_unprocessed_nse() -> list[dict]:
     Fetched the unprocessed nse filings from nse_filings table
     """
     sql = """
-    SELECT filing_id, pdf_url,symbol,subject, description, exchange, ingested_at,
+    SELECT filing_id, pdf_url,symbol,subject, description, ingested_at,
     filing_type, is_processed, filing_date
     FROM nse_filings
     WHERE is_processed= FALSE
@@ -113,7 +113,7 @@ def upsert_raw_news(insight: dict) -> int:
                         body = %s,
                         ticker_tags= %s
                     WHERE id= %s ;
-                    """, (True, insight['body'], insight['ticker_tags'], insight["raw_news_id"],))
+                    """, (True, insight.get('body'), insight.get('ticker_tags'), insight.get("raw_news_id"),))
             return curr.rowcount
 
 

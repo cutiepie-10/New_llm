@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from llmlingua import PromptCompressor
 
 load_dotenv()
 
@@ -15,8 +14,3 @@ GROQ_API_KEY = os.environ['GROQ_API_KEY']
 INSIGHT_REFRESH_TIME = int(os.environ['INSIGHT_REFRESH_TIME'])
 
 DATABASE_URL = os.environ['DATABASE_URL']
-COMPRESSOR = PromptCompressor(
-            model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
-            use_llmlingua2=True,
-            device_map="cpu",
-        )

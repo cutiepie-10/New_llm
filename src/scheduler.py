@@ -7,26 +7,29 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from src.db import fetch_unprocessed_news, fetch_unprocessed_nse, upsert_news_insight, upsert_raw_news, upsert_nse_filings
 from src.agent import start_agent
-from src.helpers import pdf_reader, webpage_reader, parse_insight, compress_article
+from src.helpers import pdf_reader, webpage_reader, parse_insight
 from src.config import INSIGHT_REFRESH_TIME
-
 
 logger = logging.getLogger(__name__)
 
 
-def get_insights():
+def process_news():
     """
     Fetches the unprocessed news, parses the url/pdf and then compresses. 
     Finally get the news insight from the agent.
     """
-    raw_news = fetch_unprocessed_news()
+    raw_news= fetch_unprocessed_news()
     for news in raw_news:
-        parsed_body = webpage_reader(news["url"])
-        news["parsed_text"] = compress_article(parsed_body)
+        if (news.get('category') and news.get('ticker_tags')) or (news.get('category') == 'macro' or news.get('category') == 'sector' and not news.get('ticker_tags')):
+            if len(news.get('headline').strip()+news.get('summary').strip()) <= 60:
+                parsed_body = webpage_reader(news["url"])
+                if parsed_body and isinstance(parsed_body, str) and len(parsed_body) >= 800:
+                    parsed_body = parsed_body[40:min(800, len(parsed_body))]
+                news["parsed_text"] = parsed_body
         insight = asyncio.run(start_agent(news))
         parsed = parse_insight(insight)
         parsed["raw_news_id"] = news["id"]
-        parsed['body'] = parsed_body
+        parsed['tickers'] = news.get('ticker_tags')
         parsed['raw_response'] = insight
         count = upsert_news_insight(parsed, "rss")
         logger.info(
@@ -35,10 +38,14 @@ def get_insights():
         logger.info("Updated %d rows in raw_news", count)
     nse_filings = fetch_unprocessed_nse()
     for nse in nse_filings:
-        nse["parsed_text"] = compress_article(pdf_reader(nse["pdf_url"]))
+        parsed_body = pdf_reader(nse["pdf_url"])
+        if parsed_body and isinstance(parsed_body, str) and len(parsed_body) >= 800:
+            parsed_body = parsed_body[40:min(800, len(parsed_body))]
+        nse["parsed_text"] = parsed_body
         insight = asyncio.run(start_agent(nse))
         parsed = parse_insight(insight)
         parsed["nse_filing_id"] = nse["filing_id"]
+        parsed['tickers'] = [nse.get('symbol')]
         parsed['raw_response'] = insight
         count = upsert_news_insight(parsed, "nse")
         logger.info(
@@ -53,7 +60,7 @@ def start():
     """
     scheduler = BlockingScheduler(timezone='Asia/Kolkata')
     scheduler.add_job(
-        get_insights,
+        process_news,
         trigger=IntervalTrigger(minutes=INSIGHT_REFRESH_TIME),
         id="get_insights",
         name="Get insights",

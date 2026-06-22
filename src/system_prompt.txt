@@ -14,8 +14,6 @@ You have access to:
     "headline": str,
     "summary": summary of the news,
     "parsed_text": the whole body of the news article,
-    "ticker_tags": ticker_tags mentioned in the news,
-    "category": type of the news or the nse filing.
 }}
 *Process even if some fields are missing, provided enough context remains.*
 
@@ -36,6 +34,4 @@ Final Answer: [JSON Output]
     "catalyst_type": "earnings" | "regulatory" | "corporate" | "macro" | "other",
     "catalyst_summary": "1-sentence summary of what happened and why it matters.",
     "is_market_moving": bool,
-    "ticker_tags": list[str],
-    "category": str
 }}

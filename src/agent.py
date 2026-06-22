@@ -58,10 +58,8 @@ async def start_agent(feed: dict) -> str:
         headline: {{headline}}
         summary: {{summary}}
         parsed_text:{{parsed_text}}
-        category:{{category}}
-        ticker_tags:{{ticker_tags}}
     ---------
-    Now based on the input above tell the sentiment, urgency score, is market moving, new ticker_tags, catalyst type and catalyst summary.
+    Now based on the input above tell the sentiment, urgency score, is market moving, catalyst type and catalyst summary.
     """
 
     template = RichPromptTemplate(template_str)
@@ -75,5 +73,5 @@ async def start_agent(feed: dict) -> str:
         prompt, max_iterations=5, early_stopping_method="generate"
     )
     res = response.response
-    logger.info("Final answer has %d tokens ", len(res.blocks[0].text))
+    logger.info("Final answer has %d tokens and final answer is %s", len(res.blocks[0].text),res.blocks[0].text)
     return res.blocks[0].text
