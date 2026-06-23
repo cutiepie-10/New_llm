@@ -21,7 +21,7 @@ def process_news():
     raw_news= fetch_unprocessed_news()
     for news in raw_news:
         if (news.get('category') and news.get('ticker_tags')) or (news.get('category') == 'macro' or news.get('category') == 'sector' and not news.get('ticker_tags')):
-            if len(news.get('headline').strip()+news.get('summary').strip()) <= 60:
+            if len(news.get('headline').strip()+news.get('summary').strip()) <= 40:
                 parsed_body = webpage_reader(news["url"])
                 if parsed_body and isinstance(parsed_body, str) and len(parsed_body) >= 800:
                     parsed_body = parsed_body[40:min(800, len(parsed_body))]
