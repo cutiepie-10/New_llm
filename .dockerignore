@@ -3,3 +3,4 @@
 .dockerignore
 ./.pytest_cache
 ./src/__pycache__
+.pytest_cache
