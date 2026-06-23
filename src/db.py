@@ -110,10 +110,10 @@ def upsert_raw_news(insight: dict) -> int:
             curr.execute("""
                     UPDATE  raw_news
                     SET is_processed =%s ,
-                        body = %s,
-                        ticker_tags= %s
+                        body = %s
                     WHERE id= %s ;
-                    """, (True, insight.get('body'), insight.get('ticker_tags'), insight.get("raw_news_id"),))
+                    """, (True, insight.get('body'), insight.get("raw_news_id"),)
+                         )
             return curr.rowcount
 
 
@@ -129,3 +129,74 @@ def upsert_nse_filings(insight: dict) -> int:
                 WHERE filing_id= %s;
                 """, (True, insight["nse_filing_id"]))
             return curr.rowcount
+
+
+def fetch_oldest_unprocessed_nse() -> dict:
+    """
+    Helper function for health check to get the oldest uprocessed nse
+    """
+
+    sql = """
+    SELECT filing_id, pdf_url,symbol,subject, description, ingested_at,
+    filing_type, is_processed, filing_date
+    FROM nse_filings
+    WHERE is_processed= FALSE
+    ORDER BY ingested_at DESC
+    LIMIT 1;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as curr:
+            curr.execute(sql)
+            res = curr.fetchone()
+            return dict(res)
+
+
+def fetch_oldest_unprocessed_news() -> dict:
+    """
+    Helper function for health check to get the oldest uprocessed news
+    """
+
+    sql = """
+    SELECT  ingested_at,ticker_tags, category, is_processed
+    FROM raw_news
+    WHERE is_processed= FALSE AND NOT (category='{"other"}' AND ticker_tags= '{}')
+    ORDER BY ingested_at DESC
+    LIMIT 1;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as curr:
+            curr.execute(sql)
+            res = curr.fetchone()
+            return dict(res)
+
+
+def fetch_last_inserted_insight():
+    """
+    Fetches the last inserted news insight row
+    """
+    sql = """
+    SELECT processed_at FROM news_insights
+    ORDER BY processed_at ASC
+    LIMIT 1;
+    """
+    with get_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as curr:
+            curr.execute(sql)
+            res = curr.fetchone()
+            return dict(res)
+
+def get_urgency_score_pct(score:int)->float:
+    """
+        Gets the percentage of a particular urgency score in past 24 hours
+    """
+    sql ="""
+    SELECT ROUND(
+        100.0* SUM((urgency_score=%s)::int)/ NULLIF(COUNT(*),0), 1
+    ) FROM news_insights
+    WHERE processed_at > NOW()- interval '24 hours';
+    """
+    with get_connection() as conn:
+        with conn.cursor() as curr:
+            curr.execute(sql,(score,))
+            res = curr.fetchone()
+            return float(res[0])
